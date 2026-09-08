@@ -20,6 +20,9 @@ use Hyperf\Coroutine\Locker;
 use Hyperf\Grpc\Parser;
 use Hyperf\Grpc\StatusCode;
 use Hyperf\GrpcClient\Exception\GrpcClientException;
+use Hyperf\GrpcClient\MessageStream\MessageStreamBidiStreamingCall;
+use Hyperf\GrpcClient\MessageStream\MessageStreamClientStreamingCall;
+use Hyperf\GrpcClient\MessageStream\MessageStreamServerStreamingCall;
 use InvalidArgumentException;
 use Swoole\Http2\Response;
 use Throwable;
@@ -138,6 +141,24 @@ class BaseClient
     }
 
     /**
+     * Create a client-streaming call that reassembles complete gRPC messages.
+     */
+    protected function _clientMessageStreamRequest(
+        string $method,
+        $deserialize,
+        array $metadata = [],
+        array $options = []
+    ): MessageStreamClientStreamingCall {
+        $call = new MessageStreamClientStreamingCall();
+        $call->setClient($this->_getGrpcClient())
+            ->setMethod($method)
+            ->setDeserialize($deserialize)
+            ->setMetadata($metadata);
+
+        return $call;
+    }
+
+    /**
      * Call a remote method that takes a single argument and returns a stream
      * of responses.
      *
@@ -165,6 +186,24 @@ class BaseClient
     }
 
     /**
+     * Create a server-streaming call that reassembles complete gRPC messages.
+     */
+    protected function _serverMessageStreamRequest(
+        $method,
+        $deserialize,
+        array $metadata = [],
+        array $options = []
+    ): MessageStreamServerStreamingCall {
+        $call = new MessageStreamServerStreamingCall();
+        $call->setClient($this->_getGrpcClient())
+            ->setMethod($method)
+            ->setDeserialize($deserialize)
+            ->setMetadata($metadata);
+
+        return $call;
+    }
+
+    /**
      * Call a remote method with messages streaming in both directions.
      *
      * @param string $method The name of the method to call
@@ -181,6 +220,24 @@ class BaseClient
             ->setMethod($method)
             ->setDeserialize($deserialize)
             ->setMetadata($metadata);
+        return $call;
+    }
+
+    /**
+     * Create a bidirectional-streaming call that reassembles complete gRPC messages.
+     */
+    protected function _bidiMessageStreamRequest(
+        string $method,
+        $deserialize,
+        array $metadata = [],
+        array $options = []
+    ): MessageStreamBidiStreamingCall {
+        $call = new MessageStreamBidiStreamingCall();
+        $call->setClient($this->_getGrpcClient())
+            ->setMethod($method)
+            ->setDeserialize($deserialize)
+            ->setMetadata($metadata);
+
         return $call;
     }
 

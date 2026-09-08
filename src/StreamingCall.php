@@ -115,7 +115,7 @@ class StreamingCall
         }
     }
 
-    public function recv(float $timeout = -1.0): array
+    public function recv(float $timeout = -1.0)
     {
         if ($this->getStreamId() <= 0) {
             $recv = false;
@@ -130,27 +130,13 @@ class StreamingCall
         if ($recv === false) {
             throw $this->newException();
         }
-
-        /** @var \Swoole\Http2\Response $recv */
-
         // server ended the stream
         if ($recv->pipeline === false) {
             $this->streamId = 0;
-
-            // TODO: Consider whether there should throw an exception if the HTTP/2 pipeline ends with a non-zero or missing gRPC status.
-            // Personally, I would prefer not to expose the gRPC status externally
-            $grpcStatus = $recv->headers["grpc-status"] ?? 0;
-
-            if($grpcStatus != 0){
-                $grpcMessage = $recv->headers['grpc-message'] ?? 'Unknown error';
-            }else{
-                $grpcMessage = null;
-            }
-
-            return [$grpcMessage, $grpcStatus, $recv];
+            return [null, 0, $recv];
         }
 
-        return [Parser::parseStreamMessage($recv->data, $this->deserialize), 0, $recv];
+        return Parser::parseResponse($recv, $this->deserialize);
     }
 
     public function end(): void
